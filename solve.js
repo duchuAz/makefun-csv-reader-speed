@@ -55,6 +55,10 @@ let fAdded = 0;
 function readUnquoted(base) {
   let value = base;
   let added = 0;
+  // A field that starts with nothing before its first run of characters is the common case, and
+  // there the run can be assigned rather than concatenated onto "" — the same string, one fewer
+  // cons cell to allocate and flatten.
+  let first = base.length === 0;
   for (;;) {
     const start = pos;
     while (pos < n) {
@@ -63,7 +67,13 @@ function readUnquoted(base) {
       pos += 1;
     }
     if (pos > start) {
-      value += s.slice(start, pos);
+      const chunk = s.slice(start, pos);
+      if (first) {
+        value = chunk;
+        first = false;
+      } else {
+        value += chunk;
+      }
       added += pos - start;
     }
     if (pos >= n) {
